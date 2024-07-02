@@ -1,0 +1,132 @@
+Go with tests: {
+  ch1: {
+    init -> go mod init module name: prep file
+    tests: {
+      hw: |go
+        package main
+
+        import "fmt"
+
+        func main() {
+          fmt.Println("Hello, world")
+        }
+      |
+
+      hw-sep: |go
+        package main
+
+        import "fmt"
+
+        func Hello()string{
+          return "Hello World"
+        }
+
+        func main() {
+          fmt.Println(Hello())
+        }
+
+      |
+      hw -> hw-sep: separate domain from side effects
+
+      hw-test: |go
+        package main
+
+        import "testing"
+
+        func TestHello(t *testing.T) {
+          got := Hello()
+          want := "Hello, world"
+
+          if got != want {
+            t.Errorf("got %q want %q", got, want)
+          }
+        }
+      |
+      hw-test -> hw-sep: go test
+
+      test_expl: |md
+        # Test rules
+        - filename must be xxx_test.go
+        - test function must start with "Test"
+        - test function takes only one argument "*testing.T"
+        - t is the hook into the testing framework used to do things like "t.Fail()"
+      |
+
+      test_expl -> hw-test
+
+      hchris-w-default: |go
+        package main
+
+        import "testing"
+
+        func TestHello(t *testing.T) {
+          t.Run("saying hello to people", func(t *testing.T) {
+            got := Hello("Chris")
+            want := "Hello, Chris!"
+            assertCorrectMessage(t, got, want)
+          })
+          t.Run("say 'Hello, World' when an empty string is supplied", func(t *testing.T) {
+            got := Hello("")
+            want := "hello, world!"
+            assertCorrectMessage(t, got, want)
+          })
+        }
+
+        func assertCorrectMessage(t testing.TB, got, want string) {
+          t.Helper()
+          if got != want {
+            t.Errorf("got %q want %q", got, want)
+          }
+          
+        }
+      |
+
+      hchris-expl: |md
+        # subtests
+        - use t.Run with printed indicator and anon function as params
+        - testing.TB satisfies 2 interfaces:
+          - testing.T test(T)
+          - testing.B benchmark(B)
+        - t.Helper() is needed to tell the test suite that this method is a helper. By doing this, when it fails, the line number reported will be in our function call rather than inside our test helper. 
+
+        When implementing a helper() it's a good idea to use both T and B.
+
+      |
+    }
+    switch: {
+      switch-expl: |md
+        # switch
+        the scope of variables is limited to within the switch statement
+
+        in order to return a var has to be declared outside (before) of the scope 
+
+      |
+
+      switch-eg1: |go
+        prefix := englishGreetingPrefix
+        switch language {
+          case "Spanish":
+            prefix = spanishGreetingPrefix
+        }
+        return prefix
+      |
+
+      switch-eg2: |go
+        func (language string) (prefix string){
+          switch language {
+            case "Spanish":
+              prefix = spanishGreetingPrefix
+            default
+              prefix = englishGreetingPrefix
+          }
+          return
+        }
+
+      |
+
+      switch-expl -> switch-eg1
+      switch-expl -> switch-eg2
+    }
+  }
+}
+
